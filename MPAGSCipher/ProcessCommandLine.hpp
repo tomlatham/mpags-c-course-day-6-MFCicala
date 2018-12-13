@@ -17,11 +17,15 @@
 
 /**
  * \class MissingArgument
- * \breif To handle exceptions in case of missing arguments from command line
+ * \brief Exception object to indicate the case of missing arguments from command line
  */
 
 class MissingArgument : public std::invalid_argument {
 public:
+  /**
+   * \brief Construct a MissingArgument exception
+   * \param msg the diagnostic message
+   */
   MissingArgument( const std::string& msg):
     std::invalid_argument(msg){}
 };
@@ -29,11 +33,15 @@ public:
 
 /**
  * \class UnknownArgument
- * \breif To handle exceptions in case of unknown arguments from command line
+ * \brief Exception object to indicate the case of unknown arguments from command line
  */
 
 class UnknownArgument : public std::invalid_argument {
 public:
+  /**
+   * \brief Construct a UnknownArgument exception
+   * \param msg the diagnostic message
+   */
   UnknownArgument( const std::string& msg):
     std::invalid_argument(msg){}
 };
@@ -58,9 +66,10 @@ struct ProgramSettings {
  *
  * \param args the command-line arguments to be processed
  * \param settings the program settings to be modified based upon the arguments received
- * \return true if the arguments could be successfully parsed, false otherwise
+ *
+ * \exception MissingArgument will be emitted if an expected argument is not found during parsing
+ * \exception UnknownArgument will be emitted if an argument encountered during parsing is not recognised
  */
 void processCommandLine(const std::vector<std::string>& args, ProgramSettings& settings);
-//bool processCommandLine(const std::vector<std::string>& args, ProgramSettings& settings);
 
 #endif // MPAGSCIPHER_PROCESSCOMMANDLINE_HPP 

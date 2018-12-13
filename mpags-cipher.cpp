@@ -27,8 +27,10 @@ int main(int argc, char* argv[])
     //bool cmdLineStatus {processCommandLine(cmdLineArgs, settings) };
     processCommandLine(cmdLineArgs, settings);
   } catch( const MissingArgument& e){
+    std::cerr << "[error] Missing argument: " << e.what() << std::endl;
     return 1;
-  } catch( const UnknownArgument& er){
+  } catch( const UnknownArgument& e){
+    std::cerr << "[error] Unknown argument: " << e.what() << std::endl;
     return 1;
   } 
 
@@ -109,68 +111,58 @@ int main(int argc, char* argv[])
   }
 
   // Request construction of the appropriate cipher
+  std::unique_ptr<Cipher> cipher{};
   try{
-    auto cipher = cipherFactory( settings.cipherType, settings.cipherKey );
+    cipher = cipherFactory( settings.cipherType, settings.cipherKey );
   } catch(const InvalidKey error){
-    std::cerr<< "[Invalid Key error from exception]: " << error.what() << "Problem constructing requested cipher" << std::endl;
+    std::cerr<< "[error]: " << error.what() << ". Problem constructing requested cipher" << std::endl;
     return 1;
   }
-  auto cipher = cipherFactory( settings.cipherType, settings.cipherKey );
+
   // Check that the cipher was constructed successfully
-  //if ( ! cipher ) {
-  //std::cerr << "[error] problem constructing requested cipher" << std::endl;
-  //return 1;
-  //}
+  if ( ! cipher ) {
+    std::cerr << "[error] problem constructing requested cipher" << std::endl;
+    return 1;
+  }
 
   std::string outputText;
   
   
   if (settings.cipherType == CipherType::Caesar)
     {
-      std::vector< std::future< std::string > > futures;
-      int sublength = inputText.length()/2;
+      const size_t sublength = inputText.length()/2;
       std::string sub1 = inputText.substr(0, sublength);
       std::string sub2 = inputText.substr(sublength, inputText.length()-sublength);    
-      std::future_status status; 
-      auto fn = [&] (std::string sub) {
-	return cipher->applyCipher( sub, settings.cipherMode);
+
+      auto fn = [&] (const std::string& sub) {
+        return cipher->applyCipher( sub, settings.cipherMode);
       };
       
+      std::vector< std::future< std::string > > futures;
+
       // Start up fisrt thread
       futures.push_back( std::async(std::launch::async, fn, sub1));
       
       // Start up second thread
       futures.push_back( std::async(std::launch::async, fn, sub2));
       
-      //wait for first to finish
-      do
-	{
-	  status = futures[0].wait_for(std::chrono::seconds(1));
-	  if (status == std::future_status::timeout)
-	    {
-	      std::cout << "[main] waiting...\n";
-	    }
-	  else if (status == std::future_status::ready)
-	    {
-	      std::cout << "[main] finally an answer!\n";
-	      outputText.insert(0, futures[0].get());
-	    }
-	}while (status != std::future_status::ready);
-      
-      // wait for second to finish
-      do
-	{
-	  status = futures[1].wait_for(std::chrono::seconds(1));
-	  if (status == std::future_status::timeout)
-	    {
-	      std::cout << "[main] waiting...\n";
-	    }
-	  else if (status == std::future_status::ready)
-	    {
-	      std::cout << "[main] finally an answer!\n";
-	      outputText.append(futures[1].get());
-	    }
-	}while (status != std::future_status::ready);
+      //wait for each to finish
+      for ( auto& future : futures ) {
+        std::future_status status; 
+        do
+          {
+            status = future.wait_for(std::chrono::seconds(1));
+            if (status == std::future_status::timeout)
+            {
+              std::cout << "[main] waiting...\n";
+            }
+            else if (status == std::future_status::ready)
+            {
+              std::cout << "[main] finally an answer!\n";
+              outputText += future.get();
+            }
+          }while (status != std::future_status::ready);
+      }
       
     }
   else
