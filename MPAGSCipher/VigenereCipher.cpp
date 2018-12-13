@@ -11,7 +11,11 @@
 
 VigenereCipher::VigenereCipher( const std::string& key )
 {
-  this->setKey( key );
+  try{
+    this->setKey( key );
+  } catch (const InvalidKey& e){
+    throw InvalidKey("[error from exception] key provide to VigenereCipher is empty, can't cipher with it.");
+  }
 }
 
 void VigenereCipher::setKey( const std::string& key )
@@ -28,10 +32,11 @@ void VigenereCipher::setKey( const std::string& key )
 
   // Check that the key is not now empty
   if ( key_.empty() ) {
+    throw InvalidKey("[error from exception] key provide to VigenereCipher is empty, can't cipher with it.");
     // If it is we would ideally throw an exception to indicate a problem (see Day 6)
     // For now we'll just set it to be some default value and print a warning
-    key_ = "VIGENEREEXAMPLE";
-    std::cerr << "[warning] key provide to VigenereCipher is empty, setting it to the default: " << key_ << std::endl;
+    // key_ = "VIGENEREEXAMPLE";
+    //std::cerr << "[warning] key provide to VigenereCipher is empty, setting it to the default: " << key_ << std::endl;
   }
 
   // Loop through the key

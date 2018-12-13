@@ -11,8 +11,33 @@
 
 /**
  * \file ProcessCommandLine.hpp
- * \brief Contains the declarations of the data structures and functions associated with the processing of command-line arguments
+ * \brief Contains the declarations of the data structures and functions associated with the processing of command-line arguments including exceptions
  */
+
+
+/**
+ * \class MissingArgument
+ * \breif To handle exceptions in case of missing arguments from command line
+ */
+
+class MissingArgument : public std::invalid_argument {
+public:
+  MissingArgument( const std::string& msg):
+    std::invalid_argument(msg){}
+};
+
+
+/**
+ * \class UnknownArgument
+ * \breif To handle exceptions in case of unknown arguments from command line
+ */
+
+class UnknownArgument : public std::invalid_argument {
+public:
+  UnknownArgument( const std::string& msg):
+    std::invalid_argument(msg){}
+};
+
 
 /**
  * \struct ProgramSettings
@@ -35,6 +60,7 @@ struct ProgramSettings {
  * \param settings the program settings to be modified based upon the arguments received
  * \return true if the arguments could be successfully parsed, false otherwise
  */
-bool processCommandLine(const std::vector<std::string>& args, ProgramSettings& settings);
+void processCommandLine(const std::vector<std::string>& args, ProgramSettings& settings);
+//bool processCommandLine(const std::vector<std::string>& args, ProgramSettings& settings);
 
 #endif // MPAGSCIPHER_PROCESSCOMMANDLINE_HPP 

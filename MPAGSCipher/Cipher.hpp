@@ -9,8 +9,23 @@
 
 /**
  * \file Cipher.hpp
- * \brief Contains the declaration of the purely abstract Cipher base class
+ * \brief Contains the declaration of the purely abstract Cipher base class and exceptions
  */
+
+/**
+ * \class InvalidKey
+ * \brief Exception in case the provided key is not vaild
+ *
+ * A base class that defines the exception for an invalid key
+ */
+class InvalidKey : public std::invalid_argument {
+  public:
+  InvalidKey( const std::string& msg):
+    std::invalid_argument(msg){}
+};
+
+
+
 
 /**
  * \class Cipher

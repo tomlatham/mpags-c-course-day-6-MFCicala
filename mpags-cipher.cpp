@@ -3,6 +3,8 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <future>
+#include <thread>
 
 // Our project headers
 #include "CipherFactory.hpp"
@@ -21,13 +23,20 @@ int main(int argc, char* argv[])
   ProgramSettings settings { false, false, "", "", "", CipherMode::Encrypt, CipherType::Caesar };
 
   // Process command line arguments
-  bool cmdLineStatus { processCommandLine(cmdLineArgs, settings) };
+  try {
+    //bool cmdLineStatus {processCommandLine(cmdLineArgs, settings) };
+    processCommandLine(cmdLineArgs, settings);
+  } catch( const MissingArgument& e){
+    return 1;
+  } catch( const UnknownArgument& er){
+    return 1;
+  } 
 
   // Any failure in the argument processing means we can't continue
   // Use a non-zero return value to indicate failure
-  if( !cmdLineStatus ) {
-    return 1;
-  }
+  /* if( !cmdLineStatus ) {
+  return 1;
+  }*/
 
   // Handle help, if requested
   if (settings.helpRequested) {
@@ -100,20 +109,79 @@ int main(int argc, char* argv[])
   }
 
   // Request construction of the appropriate cipher
-  auto cipher = cipherFactory( settings.cipherType, settings.cipherKey );
-
-  // Check that the cipher was constructed successfully
-  if ( ! cipher ) {
-    std::cerr << "[error] problem constructing requested cipher" << std::endl;
+  try{
+    auto cipher = cipherFactory( settings.cipherType, settings.cipherKey );
+  } catch(const InvalidKey error){
+    std::cerr<< "[Invalid Key error from exception]: " << error.what() << "Problem constructing requested cipher" << std::endl;
     return 1;
   }
+  auto cipher = cipherFactory( settings.cipherType, settings.cipherKey );
+  // Check that the cipher was constructed successfully
+  //if ( ! cipher ) {
+  //std::cerr << "[error] problem constructing requested cipher" << std::endl;
+  //return 1;
+  //}
 
-  // Run the cipher on the input text, specifying whether to encrypt/decrypt
-  std::string outputText { cipher->applyCipher( inputText, settings.cipherMode ) };
-
+  std::string outputText;
+  
+  
+  if (settings.cipherType == CipherType::Caesar)
+    {
+      std::vector< std::future< std::string > > futures;
+      int sublength = inputText.length()/2;
+      std::string sub1 = inputText.substr(0, sublength);
+      std::string sub2 = inputText.substr(sublength, inputText.length()-sublength);    
+      std::future_status status; 
+      auto fn = [&] (std::string sub) {
+	return cipher->applyCipher( sub, settings.cipherMode);
+      };
+      
+      // Start up fisrt thread
+      futures.push_back( std::async(std::launch::async, fn, sub1));
+      
+      // Start up second thread
+      futures.push_back( std::async(std::launch::async, fn, sub2));
+      
+      //wait for first to finish
+      do
+	{
+	  status = futures[0].wait_for(std::chrono::seconds(1));
+	  if (status == std::future_status::timeout)
+	    {
+	      std::cout << "[main] waiting...\n";
+	    }
+	  else if (status == std::future_status::ready)
+	    {
+	      std::cout << "[main] finally an answer!\n";
+	      outputText.insert(0, futures[0].get());
+	    }
+	}while (status != std::future_status::ready);
+      
+      // wait for second to finish
+      do
+	{
+	  status = futures[1].wait_for(std::chrono::seconds(1));
+	  if (status == std::future_status::timeout)
+	    {
+	      std::cout << "[main] waiting...\n";
+	    }
+	  else if (status == std::future_status::ready)
+	    {
+	      std::cout << "[main] finally an answer!\n";
+	      outputText.append(futures[1].get());
+	    }
+	}while (status != std::future_status::ready);
+      
+    }
+  else
+    {
+      // Run the cipher on the input text, specifying whether to encrypt/decrypt
+      outputText = cipher->applyCipher( inputText, settings.cipherMode );
+    }
+  
   // Output the transliterated text
   if (!settings.outputFile.empty()) {
-
+    
     // Open the file and check that we can write to it
     std::ofstream outputStream(settings.outputFile);
     if (!outputStream.good()) {

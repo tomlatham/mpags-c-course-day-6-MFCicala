@@ -4,11 +4,11 @@
 // Our project headers
 #include "ProcessCommandLine.hpp"
 
-bool processCommandLine(const std::vector<std::string>& args,
-                        ProgramSettings& settings)
+//bool processCommandLine(const std::vector<std::string>& args, ProgramSettings& settings)
+void processCommandLine(const std::vector<std::string>& args, ProgramSettings& settings)	
 {
   // Status flag to indicate whether or not the parsing was successful
-  bool processStatus(true);
+  // bool processStatus(true);
 
   // Add a typedef that assigns another name for the given type for clarity
   typedef std::vector<std::string>::size_type size_type;
@@ -32,9 +32,10 @@ bool processCommandLine(const std::vector<std::string>& args,
       // Handle input file option
       // Next element is filename unless -i is the last argument
       if (i == nArgs-1) {
-        std::cerr << "[error] -i/--infile requires a filename argument" << std::endl;
+	throw MissingArgument( "[error from exception] -i/--infile requires a filename argument");
+	//	std::cerr << "[error] -i/--infile requires a filename argument" << std::endl;
         // Set the flag to indicate the error and terminate the loop
-        processStatus = false;
+        //processStatus = false;
         break;
       }
       else {
@@ -47,9 +48,10 @@ bool processCommandLine(const std::vector<std::string>& args,
       // Handle output file option
       // Next element is filename unless -o is the last argument
       if (i == nArgs-1) {
-        std::cerr << "[error] -o/--outfile requires a filename argument" << std::endl;
+	throw MissingArgument( "[error from exception] -o/--outfile requires a filename argument");
+	//        std::cerr << "[error] -o/--outfile requires a filename argument" << std::endl;
         // Set the flag to indicate the error and terminate the loop
-        processStatus = false;
+        //processStatus = false;
         break;
       }
       else {
@@ -62,9 +64,10 @@ bool processCommandLine(const std::vector<std::string>& args,
       // Handle cipher key option
       // Next element is the key unless -k is the last argument
       if (i == nArgs-1) {
-        std::cerr << "[error] -k/--key requires a string argument" << std::endl;
+	throw MissingArgument("[error from exception] -k/--key requires a string argument");
+	//        std::cerr << "[error] -k/--key requires a string argument" << std::endl;
         // Set the flag to indicate the error and terminate the loop
-        processStatus = false;
+        //processStatus = false;
         break;
       }
       else {
@@ -85,9 +88,10 @@ bool processCommandLine(const std::vector<std::string>& args,
       // Handle cipher type option
       // Next element is the name of the cipher, unless -c is the last argument
       if (i == nArgs-1) {
-        std::cerr << "[error] -c requires a string argument" << std::endl;
+	throw MissingArgument("[error from exception] -c requires a string argument");
+	// std::cerr << "[error] -c requires a string argument" << std::endl;
         // Set the flag to indicate the error and terminate the loop
-        processStatus = false;
+        //processStatus = false;
         break;
       }
       else {
@@ -99,8 +103,9 @@ bool processCommandLine(const std::vector<std::string>& args,
 	} else if ( args[i+1] == "vigenere" ) {
 	  settings.cipherType = CipherType::Vigenere;
 	} else {
-	  std::cerr << "[error] unknown cipher '" << args[i+1] << "'\n";
-	  processStatus = false;
+	  throw MissingArgument("[error from exception] unknown cipher");
+	  //	  std::cerr << "[error] unknown cipher '" << args[i+1] << "'\n";
+	  // processStatus = false;
 	  break;
 	}
         ++i;
@@ -109,11 +114,12 @@ bool processCommandLine(const std::vector<std::string>& args,
     else {
       // Have encoutered an unknown flag, output an error message, set the flag
       // to indicate the error and terminate the loop
-      std::cerr << "[error] unknown argument '" << args[i] << "'\n";
-      processStatus = false;
+      throw UnknownArgument("[error from exception] unknown argument");
+      //      std::cerr << "[error] unknown argument '" << args[i] << "'\n";
+      //processStatus = false;
       break;
     }
   }
 
-  return processStatus;
+  //return processStatus;
 }
